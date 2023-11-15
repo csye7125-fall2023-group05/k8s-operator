@@ -24,9 +24,9 @@ Basically, Reconcile the `current` state to the `desired` state
 make docker-build docker-push IMG=<some-registry>/test-operator:tag
 ```
 
-**NOTE:** This image ought to be published in the personal registry you specified.
-And it is required to have access to pull the image from the working environment.
-Make sure you have the proper permission to the registry if the above commands don’t work.
+> **NOTE:** This image ought to be published in the personal registry you specified.
+> And it is required to have access to pull the image from the working environment.
+> Make sure you have the proper permission to the registry if the above commands don’t work.
 
 **Install the CRDs into the cluster:**
 
@@ -81,7 +81,6 @@ make undeploy
 ```bash
 # any changes to types file run the below command
 make manifests
-
 ```
 
 ## :brain: Kubebuilder
@@ -125,8 +124,7 @@ make manifests
 - In every controller, the reconciler is the logic that’s triggered by cluster events. The reconcile function takes the name of an object and returns whether or not the state matches the desired state.
 - Need to implement the logic in the internal/controller/operator_controller.go file in the function `Reconcile()`
 
-> Note: make install will install our custom resource in the k8s cluster
-> make run will connect to the k8s cluster
+> **NOTE**: `make install` will install our custom resource in the k8s cluster and `make run` will connect to the k8s cluster
 
 ## :dart: Validation & Markers
 
@@ -136,10 +134,9 @@ make manifests
 ```bash
 +kubebuilder:validation:Minimum=1
 +kubebuilder:validation:Maximum=3
-
 ```
 
-## Some imp points
+## Some important points
 
 - How to watch pods
 - SetupWithManager -> what custom resource definition to watch out for this custom controller
@@ -151,7 +148,7 @@ make manifests
 
 // TODO(user): Add detailed information on how you would like others to contribute to this project
 
-**NOTE:** Run `make --help` for more information on all potential `make` targets
+> **NOTE:** Run `make --help` for more information on all potential `make` targets
 
 More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
 
