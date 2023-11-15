@@ -35,6 +35,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// global variables declaration
+var configMapName string
+var cronJobName string
+
 // CronReconciler reconciles a Cron object
 type CronReconciler struct {
 	client.Client
@@ -66,11 +70,12 @@ func (r *CronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	l.Info("Inside the controller")
 	l.Info("Cron Config values", "Kind", cron.Kind, "Url", cron.Spec.Url)
 
+	r.setGlobalVariables(&cron)
 	//retries := cron.Spec.Retries
 
 	cm := r.defineConfigMap(&cron)
 
-	if err := r.Get(ctx, types.NamespacedName{Name: "cron-config-map", Namespace: "default"}, cm); err != nil {
+	if err := r.Get(ctx, types.NamespacedName{Name: configMapName, Namespace: cron.Namespace}, cm); err != nil {
 		l.Error(err, "unable to fetch CronJob")
 
 		l.Info("creating config map")
@@ -103,7 +108,7 @@ func (r *CronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 
 	job := r.defineCronJob(&cron)
 
-	if err := r.Get(ctx, types.NamespacedName{Name: cron.Name, Namespace: "default"}, job); err != nil {
+	if err := r.Get(ctx, types.NamespacedName{Name: cronJobName, Namespace: cron.Namespace}, job); err != nil {
 
 		l.Info("creating cron job")
 		err := r.Create(ctx, job)
@@ -183,8 +188,8 @@ func (r *CronReconciler) defineConfigMap(cron *webappcronv1.Cron) *apiv1.ConfigM
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "cron-config-map",
-			Namespace: "default",
+			Name:      configMapName,
+			Namespace: cron.Namespace,
 		},
 		Data: map[string]string{
 			"retries": fmt.Sprint(retries),
@@ -199,8 +204,8 @@ func (r *CronReconciler) defineCronJob(cron *webappcronv1.Cron) *batchv1.CronJob
 
 	job := &batchv1.CronJob{ObjectMeta: metav1.ObjectMeta{
 
-		Name:      cron.Name,
-		Namespace: "default"},
+		Name:      cronJobName,
+		Namespace: cron.Namespace},
 
 		Spec: batchv1.CronJobSpec{
 
@@ -241,7 +246,7 @@ func (r *CronReconciler) defineCronJob(cron *webappcronv1.Cron) *batchv1.CronJob
 // function to delete the dependent resources
 func (r *CronReconciler) deleteExternalResources(cron *webappcronv1.Cron, job *batchv1.CronJob, cm *apiv1.ConfigMap, ctx context.Context) error {
 	log := log.FromContext(ctx)
-	if err := r.Get(ctx, types.NamespacedName{Name: cron.Name, Namespace: "default"}, job); err != nil {
+	if err := r.Get(ctx, types.NamespacedName{Name: cronJobName, Namespace: cron.Namespace}, job); err != nil {
 		log.Error(err, "Cannot fetch the CronJob")
 		return err
 	}
@@ -255,7 +260,7 @@ func (r *CronReconciler) deleteExternalResources(cron *webappcronv1.Cron, job *b
 	log.Info("CronJob deleted success!")
 
 	// Deletion process for ConfigMap
-	if err := r.Get(ctx, types.NamespacedName{Name: "cron-config-map", Namespace: "default"}, cm); err != nil {
+	if err := r.Get(ctx, types.NamespacedName{Name: configMapName, Namespace: cron.Namespace}, cm); err != nil {
 		log.Error(err, "Cannot fetch the Config map")
 		return err
 	}
@@ -266,4 +271,10 @@ func (r *CronReconciler) deleteExternalResources(cron *webappcronv1.Cron, job *b
 	}
 	log.Info("ConfigMap deleted success!")
 	return nil
+}
+
+// function to define the global variables for configmap & cronjob
+func (r *CronReconciler) setGlobalVariables(cron *webappcronv1.Cron) {
+	configMapName = cron.Name + "-config-map"
+	cronJobName = cron.Name + "-cronjob"
 }
