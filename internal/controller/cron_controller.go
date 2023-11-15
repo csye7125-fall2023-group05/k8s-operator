@@ -125,6 +125,39 @@ func (r *CronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	}
 	//l.Info("The status of job is", "CronJob", job.Status.Active, "Last success", job.Status.LastSuccessfulTime
 
+	//start of finalizer
+	csye7125Finalizer := "batch.tutorial.kubebuilder.io/finalizer"
+
+	if cron.ObjectMeta.DeletionTimestamp.IsZero() {
+		// The object is not being deleted, so if it does not have our finalizer,
+		// then lets add the finalizer and update the object. This is equivalent
+		// registering our finalizer.
+		if !controllerutil.ContainsFinalizer(&cron, csye7125Finalizer) {
+			controllerutil.AddFinalizer(&cron, csye7125Finalizer)
+			if err := r.Update(ctx, &cron); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	} else {
+		// The object is being deleted
+		if controllerutil.ContainsFinalizer(&cron, csye7125Finalizer) {
+
+			if err := r.deleteExternalResources(&cron, job, cm, ctx); err != nil {
+				// if fail to delete the external dependency here, return with erro2
+				// so that it can be retried
+				return ctrl.Result{}, err
+			}
+
+			controllerutil.RemoveFinalizer(&cron, csye7125Finalizer)
+			if err := r.Update(ctx, &cron); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+
+		// Stop reconciliation as the item is being deleted
+		return ctrl.Result{}, nil
+	}
+
 	// end of finalizer
 
 	return ctrl.Result{}, nil
@@ -203,4 +236,34 @@ func (r *CronReconciler) defineCronJob(cron *webappcronv1.Cron) *batchv1.CronJob
 
 	controllerutil.SetControllerReference(cron, job, r.Scheme)
 	return job
+}
+
+// function to delete the dependent resources
+func (r *CronReconciler) deleteExternalResources(cron *webappcronv1.Cron, job *batchv1.CronJob, cm *apiv1.ConfigMap, ctx context.Context) error {
+	log := log.FromContext(ctx)
+	if err := r.Get(ctx, types.NamespacedName{Name: cron.Name, Namespace: "default"}, job); err != nil {
+		log.Error(err, "Cannot fetch the CronJob")
+		return err
+	}
+
+	log.Info("CronJob Found and ready to delete")
+	err := r.Delete(ctx, job)
+
+	if err != nil {
+		return err
+	}
+	log.Info("CronJob deleted success!")
+
+	// Deletion process for ConfigMap
+	if err := r.Get(ctx, types.NamespacedName{Name: "cron-config-map", Namespace: "default"}, cm); err != nil {
+		log.Error(err, "Cannot fetch the Config map")
+		return err
+	}
+	err_cm := r.Delete(ctx, cm)
+
+	if err_cm != nil {
+		return err_cm
+	}
+	log.Info("ConfigMap deleted success!")
+	return nil
 }
