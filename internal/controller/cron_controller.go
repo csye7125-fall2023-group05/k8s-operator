@@ -85,6 +85,22 @@ func (r *CronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	// here cm is there and now check if anything needs to be updated ?
+	if fmt.Sprint(cron.Spec.Retries) != cm.Data["retries"] {
+		l.Info("retries need to be updated")
+
+		cm.Data["retries"] = fmt.Sprint(cron.Spec.Retries)
+
+		err := r.Update(ctx, cm)
+
+		if err != nil {
+			l.Error(err, "Could not update the CronJob resource")
+			return ctrl.Result{}, err
+		}
+
+		l.Info("Update of the CronJob Success!")
+	}
+
 	job := r.defineCronJob(&cron)
 
 	if err := r.Get(ctx, types.NamespacedName{Name: cron.Name, Namespace: "default"}, job); err != nil {
