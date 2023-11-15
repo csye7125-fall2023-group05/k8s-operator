@@ -1,0 +1,32 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: manager-role
+rules:
+- apiGroups:
+  - webappcron.csye7125-fall2023-group05.cloud
+  resources:
+  - crons
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - webappcron.csye7125-fall2023-group05.cloud
+  resources:
+  - crons/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - webappcron.csye7125-fall2023-group05.cloud
+  resources:
+  - crons/status
+  verbs:
+  - get
+  - patch
+  - update

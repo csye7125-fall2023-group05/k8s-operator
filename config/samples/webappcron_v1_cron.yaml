@@ -1,0 +1,14 @@
+apiVersion: webappcron.csye7125-fall2023-group05.cloud/v1
+kind: Cron
+metadata:
+  labels:
+    app.kubernetes.io/name: cron
+    app.kubernetes.io/instance: cron-sample
+    app.kubernetes.io/part-of: test-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: test-operator
+  name: cron-sample
+spec:
+  url: "www.google.com"
+  retries: 5
+  res_code: 200
