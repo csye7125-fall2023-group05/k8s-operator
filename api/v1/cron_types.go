@@ -29,9 +29,14 @@ type CronSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of Cron. Edit cron_types.go to remove/update
-	Url      string `json:"url,omitempty"`
-	Retries  int    `json:"retries,omitempty"`
-	Response int    `json:"res_code,omitempty"`
+	Url       string `json:"url,omitempty"`
+	Retries   int    `json:"retries,omitempty"`
+	Response  int    `json:"res_code,omitempty"`
+	Broker_0  string `json:"broker_0,omitempty"`
+	Broker_1  string `json:"broker_1,omitempty"`
+	Broker_2  string `json:"broker_2,omitempty"`
+	Client_Id string `json:"client_id,omitempty"`
+	Topic     string `json:"topic,omitempty"`
 }
 
 // CronStatus defines the observed state of Cron
