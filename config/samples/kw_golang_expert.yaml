@@ -15,5 +15,5 @@ spec:
   broker_2: "infra-helm-release-kafka-broker-2.infra-helm-release-kafka-broker-headless.default.svc.cluster.local:9094"
   client_id: "webapp"
   topic: "healthcheck"
-  retries: 5
+  retries: 2
   res_code: 200

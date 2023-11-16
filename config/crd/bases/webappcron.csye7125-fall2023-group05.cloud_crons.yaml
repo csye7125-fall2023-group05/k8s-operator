@@ -45,6 +45,7 @@ spec:
               res_code:
                 type: integer
               retries:
+                format: int32
                 type: integer
               topic:
                 type: string

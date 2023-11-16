@@ -30,7 +30,7 @@ type CronSpec struct {
 
 	// Foo is an example field of Cron. Edit cron_types.go to remove/update
 	Url       string `json:"url,omitempty"`
-	Retries   int    `json:"retries,omitempty"`
+	Retries   int32  `json:"retries,omitempty"`
 	Response  int    `json:"res_code,omitempty"`
 	Broker_0  string `json:"broker_0,omitempty"`
 	Broker_1  string `json:"broker_1,omitempty"`
