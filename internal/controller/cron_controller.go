@@ -29,16 +29,13 @@ import (
 
 	webappcronv1 "csye7125-fall2023-group05.cloud/cron/api/v1"
 	batchv1 "k8s.io/api/batch/v1"
-
 	apiv1 "k8s.io/api/core/v1"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // global variables declaration
-var configMapName string
-
 // var secretName string
+var configMapName string
 var cronJobName string
 
 // CronReconciler reconciles a Cron object
@@ -61,84 +58,79 @@ type CronReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.16.3/pkg/reconcile
 func (r *CronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	l := log.FromContext(ctx)
+	log := log.FromContext(ctx)
 
 	cron := webappcronv1.Cron{}
 	if err := r.Get(ctx, req.NamespacedName, &cron); err != nil {
-		l.Error(err, "unable to fetch CronJob")
+		log.Error(err, "Unable to fetch CronJob")
+		// we'll ignore not-found errors, since they can't be fixed by an immediate
+		// requeue (we'll need to wait for a new notification), and we can get them
+		// on deleted requests.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	l.Info("Inside the controller")
-	l.Info("Cron Config values", "Kind", cron.Kind, "Url", cron.Spec.Url)
+	log.V(3).Info("Inside the controller")
+	log.V(2).Info("Cron Config values", "Kind", cron.Kind, "Url", cron.Spec.Url)
 
 	r.setGlobalVariables(&cron)
-	//retries := cron.Spec.Retries
 
-	cm := r.defineConfigMap(&cron)
+	// create the ConfigMap
+	cfgMap := r.defineConfigMap(&cron)
 
-	if err := r.Get(ctx, types.NamespacedName{Name: configMapName, Namespace: cron.Namespace}, cm); err != nil {
-		l.Error(err, "unable to fetch CronJob")
+	if err := r.Get(ctx, types.NamespacedName{Name: configMapName, Namespace: cron.Namespace}, cfgMap); err != nil {
+		log.Error(err, "Unable to fetch CronJob")
 
-		l.Info("creating config map")
-		cm_error := r.Create(ctx, cm)
-
-		if cm_error != nil {
-			l.Error(cm_error, "Unable to create the config map for cron job")
-			return ctrl.Result{}, cm_error
+		log.V(1).Info("Creating ConfigMap")
+		cfgMap_error := r.Create(ctx, cfgMap)
+		if cfgMap_error != nil {
+			log.Error(cfgMap_error, "Unable to create ConfigMap for CronJob")
+			return ctrl.Result{}, cfgMap_error
 		}
-
-		l.Info("ConfigMap created success!")
+		log.V(1).Info("ConfigMap created successfully!")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// here cm is there and now check if anything needs to be updated ?
-	if fmt.Sprint(cron.Spec.Retries) != cm.Data["RETRIES"] {
-		l.Info("retries need to be updated")
+	// cfgMap is present, check if anything needs to be updated
+	// check Retries update
+	if fmt.Sprint(cron.Spec.Retries) != cfgMap.Data["RETRIES"] {
+		log.V(1).Info("Retries needs to be updated")
+		cfgMap.Data["RETRIES"] = fmt.Sprint(cron.Spec.Retries)
 
-		cm.Data["RETRIES"] = fmt.Sprint(cron.Spec.Retries)
-
-		err := r.Update(ctx, cm)
-
+		err := r.Update(ctx, cfgMap)
 		if err != nil {
-			l.Error(err, "Could not update the CronJob resource")
+			log.Error(err, "Could not update the CronJob resource")
 			return ctrl.Result{}, err
 		}
-
-		l.Info("Update of the CronJob Success!")
+		log.V(1).Info("CronJob updated successfully!")
 	}
 
-	//check for url update
-	if fmt.Sprint(cron.Spec.Url) != cm.Data["URL"] {
-		l.Info("Url need to be updated")
+	//check URL update
+	if fmt.Sprint(cron.Spec.Url) != cfgMap.Data["URL"] {
+		log.V(1).Info("Url needs to be updated")
+		cfgMap.Data["URL"] = fmt.Sprint(cron.Spec.Url)
 
-		cm.Data["URL"] = fmt.Sprint(cron.Spec.Url)
-
-		err := r.Update(ctx, cm)
-
+		err := r.Update(ctx, cfgMap)
 		if err != nil {
-			l.Error(err, "Could not update the CronJob resource")
+			log.Error(err, "Could not update the CronJob resource")
 			return ctrl.Result{}, err
 		}
-
-		l.Info("Update of the CronJob Success!")
+		log.V(1).Info("CronJob updated successfully!")
 	}
 
+	// Create the CronJob
 	job := r.defineCronJob(&cron)
-
 	if err := r.Get(ctx, types.NamespacedName{Name: cronJobName, Namespace: cron.Namespace}, job); err != nil {
-
-		l.Info("creating cron job")
+		log.V(1).Info("creating CronJob")
 		err := r.Create(ctx, job)
 
 		if err != nil {
 			panic(err.Error())
 		}
-
-		l.Info("CronJob created", "req", req, "job", job)
-		l.Info("CronJob created success!")
-
+		log.V(2).Info("CronJob created", "req", req, "job", job)
+		log.V(1).Info("CronJob created successfully!")
 	}
+
+	// TODO: Last successful CronJob completion
 	if job.Status.LastSuccessfulTime != nil {
 		cron.Status.LastSuccessfulTime = job.Status.LastSuccessfulTime
 		err := r.Status().Update(ctx, &cron)
@@ -146,61 +138,48 @@ func (r *CronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 			return ctrl.Result{}, err
 		}
 	}
-	//l.Info("The status of job is", "CronJob", job.Status.Active, "Last success", job.Status.LastSuccessfulTime
+	// log.V(2).Info("The status of job is", "CronJob", job.Status.Active, "Last success", job.Status.LastSuccessfulTime
 
-	//start of finalizer
-	csye7125Finalizer := "batch.tutorial.kubebuilder.io/finalizer"
+	// Finalizer
+	cronFinalizer := "batch.tutorial.kubebuilder.io/finalizer"
 
 	if cron.ObjectMeta.DeletionTimestamp.IsZero() {
-		// The object is not being deleted, so if it does not have our finalizer,
-		// then lets add the finalizer and update the object. This is equivalent
-		// registering our finalizer.
-		if !controllerutil.ContainsFinalizer(&cron, csye7125Finalizer) {
-			controllerutil.AddFinalizer(&cron, csye7125Finalizer)
+		/*
+		* The object is not being deleted, so if it does not have our finalizer,
+		* then lets add the finalizer and update the object. This is equivalent
+		* registering our finalizer.
+		 */
+		if !controllerutil.ContainsFinalizer(&cron, cronFinalizer) {
+			// add Finalizer to CronJob if not present
+			controllerutil.AddFinalizer(&cron, cronFinalizer)
 			if err := r.Update(ctx, &cron); err != nil {
 				return ctrl.Result{}, err
 			}
 		}
 	} else {
-		// The object is being deleted
-		if controllerutil.ContainsFinalizer(&cron, csye7125Finalizer) {
+		// The Cron object is being deleted
+		if controllerutil.ContainsFinalizer(&cron, cronFinalizer) {
 
-			if err := r.deleteExternalResources(&cron, job, cm, ctx); err != nil {
-				// if fail to delete the external dependency here, return with erro2
+			if err := r.deleteExternalResources(&cron, job, cfgMap, ctx); err != nil {
+				// if failed to delete the external dependency here, return with erro2
 				// so that it can be retried
 				return ctrl.Result{}, err
 			}
 
-			controllerutil.RemoveFinalizer(&cron, csye7125Finalizer)
+			controllerutil.RemoveFinalizer(&cron, cronFinalizer)
 			if err := r.Update(ctx, &cron); err != nil {
 				return ctrl.Result{}, err
 			}
 		}
-
-		// Stop reconciliation as the item is being deleted
+		// Stop reconciliation since the item is being deleted
 		return ctrl.Result{}, nil
 	}
-
-	// end of finalizer
-
 	return ctrl.Result{}, nil
 }
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *CronReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&webappcronv1.Cron{}).
-		Owns(&batchv1.CronJob{}).
-		Owns(&apiv1.ConfigMap{}).
-		Complete(r)
-}
-
-// new
-
-// function for ConfigMap
+// ConfigMap definition
 func (r *CronReconciler) defineConfigMap(cron *webappcronv1.Cron) *apiv1.ConfigMap {
-	retries := cron.Spec.Retries
-	cm := apiv1.ConfigMap{
+	cfgMap := apiv1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: "v1",
@@ -209,8 +188,9 @@ func (r *CronReconciler) defineConfigMap(cron *webappcronv1.Cron) *apiv1.ConfigM
 			Name:      configMapName,
 			Namespace: cron.Namespace,
 		},
+		// TODO: add more config data values as per API spec
 		Data: map[string]string{
-			"RETRIES":   fmt.Sprint(retries),
+			"RETRIES":   fmt.Sprint(cron.Spec.Retries),
 			"URL":       cron.Spec.Url,
 			"BROKER_0":  cron.Spec.Broker_0,
 			"BROKER_1":  cron.Spec.Broker_1,
@@ -219,38 +199,30 @@ func (r *CronReconciler) defineConfigMap(cron *webappcronv1.Cron) *apiv1.ConfigM
 			"TOPIC":     cron.Spec.Topic,
 		},
 	}
-	controllerutil.SetControllerReference(cron, &cm, r.Scheme)
-	return &cm
+
+	controllerutil.SetControllerReference(cron, &cfgMap, r.Scheme)
+	return &cfgMap
 }
 
-// function for CronJob
+// CronJob definition
 func (r *CronReconciler) defineCronJob(cron *webappcronv1.Cron) *batchv1.CronJob {
 
-	job := &batchv1.CronJob{ObjectMeta: metav1.ObjectMeta{
-
-		Name:      cronJobName,
-		Namespace: cron.Namespace},
-
+	job := &batchv1.CronJob{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cronJobName,
+			Namespace: cron.Namespace,
+		},
 		Spec: batchv1.CronJobSpec{
-
 			Schedule: "* * * * *",
-
 			JobTemplate: batchv1.JobTemplateSpec{
-
 				Spec: batchv1.JobSpec{
-
 					Template: apiv1.PodTemplateSpec{
-
 						Spec: apiv1.PodSpec{
-
 							Containers: []apiv1.Container{
-
 								{
-
-									Name: "producer-app",
-
+									Name:  "producer-app",
 									Image: "sydrawat/producer",
-									// Command: []string{"/bin/sh", "-c", "sleep 60"},
+									// Command: []string{"/bin/sh", "-c", "Hello from CronJob!"},
 									EnvFrom: []apiv1.EnvFromSource{
 										{
 											ConfigMapRef: &apiv1.ConfigMapEnvSource{
@@ -259,6 +231,7 @@ func (r *CronReconciler) defineCronJob(cron *webappcronv1.Cron) *batchv1.CronJob
 												},
 											},
 										},
+										// TODO: add Secret resource configs
 										// {
 										// 	SecretRef: &apiv1.SecretEnvSource{
 										// 		LocalObjectReference: apiv1.LocalObjectReference{
@@ -269,7 +242,6 @@ func (r *CronReconciler) defineCronJob(cron *webappcronv1.Cron) *batchv1.CronJob
 									},
 								},
 							},
-
 							RestartPolicy: apiv1.RestartPolicyOnFailure,
 						},
 					},
@@ -282,39 +254,47 @@ func (r *CronReconciler) defineCronJob(cron *webappcronv1.Cron) *batchv1.CronJob
 	return job
 }
 
-// function to delete the dependent resources
-func (r *CronReconciler) deleteExternalResources(cron *webappcronv1.Cron, job *batchv1.CronJob, cm *apiv1.ConfigMap, ctx context.Context) error {
+// Delete the CronJob and its dependent resources
+func (r *CronReconciler) deleteExternalResources(cron *webappcronv1.Cron, job *batchv1.CronJob, cfgMap *apiv1.ConfigMap, ctx context.Context) error {
 	log := log.FromContext(ctx)
 	if err := r.Get(ctx, types.NamespacedName{Name: cronJobName, Namespace: cron.Namespace}, job); err != nil {
 		log.Error(err, "Cannot fetch the CronJob")
 		return err
 	}
 
-	log.Info("CronJob Found and ready to delete")
+	log.V(1).Info("CronJob found and ready to delete")
 	err := r.Delete(ctx, job)
-
 	if err != nil {
 		return err
 	}
-	log.Info("CronJob deleted success!")
+	log.V(1).Info("Successfully deleted CronJob!")
 
-	// Deletion process for ConfigMap
-	if err := r.Get(ctx, types.NamespacedName{Name: configMapName, Namespace: cron.Namespace}, cm); err != nil {
+	// Deleting CronJob ConfigMap
+	if err := r.Get(ctx, types.NamespacedName{Name: configMapName, Namespace: cron.Namespace}, cfgMap); err != nil {
 		log.Error(err, "Cannot fetch the Config map")
 		return err
 	}
-	err_cm := r.Delete(ctx, cm)
+	err_cfgMap := r.Delete(ctx, cfgMap)
 
-	if err_cm != nil {
-		return err_cm
+	if err_cfgMap != nil {
+		return err_cfgMap
 	}
 	log.Info("ConfigMap deleted success!")
 	return nil
 }
 
-// function to define the global variables for configmap & cronjob
+// Define the global variables for ConfigMap, Secret & CronJob
 func (r *CronReconciler) setGlobalVariables(cron *webappcronv1.Cron) {
 	configMapName = cron.Name + "-config-map"
 	// secretName = cron.Name + "-secret"
 	cronJobName = cron.Name + "-cronjob"
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *CronReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&webappcronv1.Cron{}).
+		Owns(&batchv1.CronJob{}).
+		Owns(&apiv1.ConfigMap{}).
+		Complete(r)
 }
