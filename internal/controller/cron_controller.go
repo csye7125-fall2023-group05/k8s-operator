@@ -37,6 +37,8 @@ import (
 
 // global variables declaration
 var configMapName string
+
+// var secretName string
 var cronJobName string
 
 // CronReconciler reconciles a Cron object
@@ -91,10 +93,26 @@ func (r *CronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	}
 
 	// here cm is there and now check if anything needs to be updated ?
-	if fmt.Sprint(cron.Spec.Retries) != cm.Data["retries"] {
+	if fmt.Sprint(cron.Spec.Retries) != cm.Data["RETRIES"] {
 		l.Info("retries need to be updated")
 
-		cm.Data["retries"] = fmt.Sprint(cron.Spec.Retries)
+		cm.Data["RETRIES"] = fmt.Sprint(cron.Spec.Retries)
+
+		err := r.Update(ctx, cm)
+
+		if err != nil {
+			l.Error(err, "Could not update the CronJob resource")
+			return ctrl.Result{}, err
+		}
+
+		l.Info("Update of the CronJob Success!")
+	}
+
+	//check for url update
+	if fmt.Sprint(cron.Spec.Url) != cm.Data["URL"] {
+		l.Info("Url need to be updated")
+
+		cm.Data["URL"] = fmt.Sprint(cron.Spec.Url)
 
 		err := r.Update(ctx, cm)
 
@@ -192,7 +210,13 @@ func (r *CronReconciler) defineConfigMap(cron *webappcronv1.Cron) *apiv1.ConfigM
 			Namespace: cron.Namespace,
 		},
 		Data: map[string]string{
-			"retries": fmt.Sprint(retries),
+			"RETRIES":   fmt.Sprint(retries),
+			"URL":       cron.Spec.Url,
+			"BROKER_0":  cron.Spec.Broker_0,
+			"BROKER_1":  cron.Spec.Broker_1,
+			"BROKER_2":  cron.Spec.Broker_2,
+			"CLIENT_ID": cron.Spec.Client_Id,
+			"TOPIC":     cron.Spec.Topic,
 		},
 	}
 	controllerutil.SetControllerReference(cron, &cm, r.Scheme)
@@ -223,11 +247,26 @@ func (r *CronReconciler) defineCronJob(cron *webappcronv1.Cron) *batchv1.CronJob
 
 								{
 
-									Name: "hello",
+									Name: "producer-app",
 
-									Image: "busybox:1.28",
-
-									Command: []string{"/bin/sh", "-c", "date; echo Hello from the Kubernetes cluster"},
+									Image: "sydrawat/producer",
+									// Command: []string{"/bin/sh", "-c", "sleep 60"},
+									EnvFrom: []apiv1.EnvFromSource{
+										{
+											ConfigMapRef: &apiv1.ConfigMapEnvSource{
+												LocalObjectReference: apiv1.LocalObjectReference{
+													Name: configMapName,
+												},
+											},
+										},
+										// {
+										// 	SecretRef: &apiv1.SecretEnvSource{
+										// 		LocalObjectReference: apiv1.LocalObjectReference{
+										// 			Name: secretName,
+										// 		},
+										// 	},
+										// },
+									},
 								},
 							},
 
@@ -276,5 +315,6 @@ func (r *CronReconciler) deleteExternalResources(cron *webappcronv1.Cron, job *b
 // function to define the global variables for configmap & cronjob
 func (r *CronReconciler) setGlobalVariables(cron *webappcronv1.Cron) {
 	configMapName = cron.Name + "-config-map"
+	// secretName = cron.Name + "-secret"
 	cronJobName = cron.Name + "-cronjob"
 }

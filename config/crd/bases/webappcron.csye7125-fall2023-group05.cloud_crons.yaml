@@ -34,10 +34,20 @@ spec:
           spec:
             description: CronSpec defines the desired state of Cron
             properties:
+              broker_0:
+                type: string
+              broker_1:
+                type: string
+              broker_2:
+                type: string
+              client_id:
+                type: string
               res_code:
                 type: integer
               retries:
                 type: integer
+              topic:
+                type: string
               url:
                 description: Foo is an example field of Cron. Edit cron_types.go to
                   remove/update
