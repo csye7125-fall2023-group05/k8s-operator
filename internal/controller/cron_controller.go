@@ -213,16 +213,18 @@ func (r *CronReconciler) defineCronJob(cron *webappcronv1.Cron) *batchv1.CronJob
 			Namespace: cron.Namespace,
 		},
 		Spec: batchv1.CronJobSpec{
-			Schedule: "* * * * *",
+			ConcurrencyPolicy: batchv1.ForbidConcurrent,
+			Schedule:          "* * * * *",
 			JobTemplate: batchv1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
+					BackoffLimit: &cron.Spec.Retries,
 					Template: apiv1.PodTemplateSpec{
 						Spec: apiv1.PodSpec{
 							Containers: []apiv1.Container{
 								{
 									Name:  "producer-app",
 									Image: "sydrawat/producer",
-									// Command: []string{"/bin/sh", "-c", "Hello from CronJob!"},
+									//Command: []string{"/bin/cat", "/etc/os"},
 									EnvFrom: []apiv1.EnvFromSource{
 										{
 											ConfigMapRef: &apiv1.ConfigMapEnvSource{
