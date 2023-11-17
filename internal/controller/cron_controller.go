@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	b64 "encoding/base64"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,8 +34,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// global variables declaration
+// Global variables
+
 // var secretName string
+var robocop string
 var configMapName string
 var cronJobName string
 
@@ -50,9 +53,9 @@ type CronReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
+// The Reconcile function compares the state specified by
 // the Cron object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
+// performs operations to make the cluster state reflect the state specified by
 // the user.
 //
 // For more details, check Reconcile and its Result here:
@@ -69,16 +72,13 @@ func (r *CronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	log.V(3).Info("Inside the controller")
-	log.V(2).Info("Cron Config values", "Kind", cron.Kind, "Url", cron.Spec.Url)
-
 	r.setGlobalVariables(&cron)
 
-	// create the ConfigMap
+	// CREATE: ConfigMap
 	cfgMap := r.defineConfigMap(&cron)
 
 	if err := r.Get(ctx, types.NamespacedName{Name: configMapName, Namespace: cron.Namespace}, cfgMap); err != nil {
-		log.Error(err, "Unable to fetch CronJob")
+		log.Error(err, "Unable to fetch ConfigMap for CronJob")
 
 		log.V(1).Info("Creating ConfigMap")
 		cfgMap_error := r.Create(ctx, cfgMap)
@@ -90,37 +90,25 @@ func (r *CronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// cfgMap is present, check if anything needs to be updated
-	// check Retries update
-	if fmt.Sprint(cron.Spec.Retries) != cfgMap.Data["RETRIES"] {
-		log.V(1).Info("Retries needs to be updated")
-		cfgMap.Data["RETRIES"] = fmt.Sprint(cron.Spec.Retries)
+	// CREATE: ImagePullSecrets
+	scrt := r.defineQuaySecret(&cron)
+	if err := r.Get(ctx, types.NamespacedName{Name: robocop, Namespace: cron.Namespace}, scrt); err != nil {
+		log.Error(err, "Unable to fetch Secret for CronJob")
 
-		err := r.Update(ctx, cfgMap)
-		if err != nil {
-			log.Error(err, "Could not update the CronJob resource")
-			return ctrl.Result{}, err
+		log.V(1).Info("Creating Secret")
+		scrt_error := r.Create(ctx, scrt)
+		if scrt_error != nil {
+			log.Error(scrt_error, "Unable to create Secret for CronJob")
+			return ctrl.Result{}, scrt_error
 		}
-		log.V(1).Info("CronJob updated successfully!")
+		log.V(1).Info("Secret created successfully!")
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	//check URL update
-	if fmt.Sprint(cron.Spec.Url) != cfgMap.Data["URL"] {
-		log.V(1).Info("Url needs to be updated")
-		cfgMap.Data["URL"] = fmt.Sprint(cron.Spec.Url)
-
-		err := r.Update(ctx, cfgMap)
-		if err != nil {
-			log.Error(err, "Could not update the CronJob resource")
-			return ctrl.Result{}, err
-		}
-		log.V(1).Info("CronJob updated successfully!")
-	}
-
-	// Create the CronJob
+	// CREATE: CronJob
 	job := r.defineCronJob(&cron)
 	if err := r.Get(ctx, types.NamespacedName{Name: cronJobName, Namespace: cron.Namespace}, job); err != nil {
-		log.V(1).Info("creating CronJob")
+		log.V(1).Info("Creating CronJob")
 		err := r.Create(ctx, job)
 
 		if err != nil {
@@ -138,9 +126,23 @@ func (r *CronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 			return ctrl.Result{}, err
 		}
 	}
-	// log.V(2).Info("The status of job is", "CronJob", job.Status.Active, "Last success", job.Status.LastSuccessfulTime
 
-	// Finalizer
+	// UPDATE: Reconcile cfgMap
+	if fmt.Sprint(cron.Spec.Retries) != cfgMap.Data["RETRIES"] {
+		log.V(1).Info("Updating Retries")
+		cfgMap.Data["RETRIES"] = fmt.Sprint(cron.Spec.Retries)
+		_, err := r.UpdateCfgMap(ctx, cfgMap, req)
+		return ctrl.Result{}, err
+	}
+
+	if fmt.Sprint(cron.Spec.Url) != cfgMap.Data["URL"] {
+		log.V(1).Info("Updating Url")
+		cfgMap.Data["URL"] = fmt.Sprint(cron.Spec.Url)
+		_, err := r.UpdateCfgMap(ctx, cfgMap, req)
+		return ctrl.Result{}, err
+	}
+
+	// FINALIZER
 	cronFinalizer := "batch.tutorial.kubebuilder.io/finalizer"
 
 	if cron.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -150,17 +152,17 @@ func (r *CronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		* registering our finalizer.
 		 */
 		if !controllerutil.ContainsFinalizer(&cron, cronFinalizer) {
-			// add Finalizer to CronJob if not present
+			// Add Finalizer to CronJob if not present
 			controllerutil.AddFinalizer(&cron, cronFinalizer)
 			if err := r.Update(ctx, &cron); err != nil {
 				return ctrl.Result{}, err
 			}
 		}
 	} else {
-		// The Cron object is being deleted
+		// Delete Cron object
 		if controllerutil.ContainsFinalizer(&cron, cronFinalizer) {
 
-			if err := r.deleteExternalResources(&cron, job, cfgMap, ctx); err != nil {
+			if err := r.deleteExternalResources(&cron, job, cfgMap, scrt, ctx); err != nil {
 				// if failed to delete the external dependency here, return with erro2
 				// so that it can be retried
 				return ctrl.Result{}, err
@@ -204,6 +206,29 @@ func (r *CronReconciler) defineConfigMap(cron *webappcronv1.Cron) *apiv1.ConfigM
 	return &cfgMap
 }
 
+// Secret definition
+func (r *CronReconciler) defineQuaySecret(cron *webappcronv1.Cron) *apiv1.Secret {
+	decodedValue, _ := b64.StdEncoding.DecodeString(cron.Spec.DockerConfigJSON)
+	scrt := apiv1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      robocop,
+			Namespace: cron.Namespace,
+		},
+		Type: apiv1.SecretTypeDockerConfigJson,
+		// TODO: add secret data
+		StringData: map[string]string{
+			".dockerconfigjson": string(decodedValue),
+		},
+	}
+
+	controllerutil.SetControllerReference(cron, &scrt, r.Scheme)
+	return &scrt
+}
+
 // CronJob definition
 func (r *CronReconciler) defineCronJob(cron *webappcronv1.Cron) *batchv1.CronJob {
 
@@ -214,17 +239,23 @@ func (r *CronReconciler) defineCronJob(cron *webappcronv1.Cron) *batchv1.CronJob
 		},
 		Spec: batchv1.CronJobSpec{
 			ConcurrencyPolicy: batchv1.ForbidConcurrent,
-			Schedule:          "* * * * *",
+			Schedule:          cron.Spec.Schedule,
 			JobTemplate: batchv1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					BackoffLimit: &cron.Spec.Retries,
 					Template: apiv1.PodTemplateSpec{
 						Spec: apiv1.PodSpec{
+							ImagePullSecrets: []apiv1.LocalObjectReference{
+								{
+									Name: robocop,
+								},
+							},
 							Containers: []apiv1.Container{
 								{
-									Name:  "producer-app",
-									Image: "sydrawat/producer",
-									//Command: []string{"/bin/cat", "/etc/os"},
+									Name:            "producer-app",
+									Image:           "quay.io/pwncorp/producer:latest",
+									ImagePullPolicy: apiv1.PullAlways,
+									//Command: []string{"/bin/sh", "-c", "date; echo Hello from the Kubernetes cluster"},
 									EnvFrom: []apiv1.EnvFromSource{
 										{
 											ConfigMapRef: &apiv1.ConfigMapEnvSource{
@@ -257,7 +288,7 @@ func (r *CronReconciler) defineCronJob(cron *webappcronv1.Cron) *batchv1.CronJob
 }
 
 // Delete the CronJob and its dependent resources
-func (r *CronReconciler) deleteExternalResources(cron *webappcronv1.Cron, job *batchv1.CronJob, cfgMap *apiv1.ConfigMap, ctx context.Context) error {
+func (r *CronReconciler) deleteExternalResources(cron *webappcronv1.Cron, job *batchv1.CronJob, cfgMap *apiv1.ConfigMap, scrt *apiv1.Secret, ctx context.Context) error {
 	log := log.FromContext(ctx)
 	if err := r.Get(ctx, types.NamespacedName{Name: cronJobName, Namespace: cron.Namespace}, job); err != nil {
 		log.Error(err, "Cannot fetch the CronJob")
@@ -282,13 +313,39 @@ func (r *CronReconciler) deleteExternalResources(cron *webappcronv1.Cron, job *b
 		return err_cfgMap
 	}
 	log.Info("ConfigMap deleted success!")
+
+	// Deleting CronJob Secret
+	if err := r.Get(ctx, types.NamespacedName{Name: robocop, Namespace: cron.Namespace}, scrt); err != nil {
+		log.Error(err, "Cannot fetch the Secret")
+		return err
+	}
+	err_scrt := r.Delete(ctx, scrt)
+
+	if err_scrt != nil {
+		return err_scrt
+	}
+	log.Info("Secret deleted success!")
 	return nil
+}
+
+// Update function for configMap updates
+func (r *CronReconciler) UpdateCfgMap(ctx context.Context, cfgMap *apiv1.ConfigMap, req ctrl.Request) (ctrl.Result, error) {
+	// TODO: Modular Update function for ConfigMap update reconciliation logic
+	log := log.FromContext(ctx)
+	err := r.Update(ctx, cfgMap)
+	if err != nil {
+		log.Error(err, "Could not update the CronJob resource")
+		return ctrl.Result{}, err
+	}
+	log.V(1).Info("CronJob updated successfully!")
+	return ctrl.Result{}, nil
 }
 
 // Define the global variables for ConfigMap, Secret & CronJob
 func (r *CronReconciler) setGlobalVariables(cron *webappcronv1.Cron) {
 	configMapName = cron.Name + "-config-map"
 	// secretName = cron.Name + "-secret"
+	robocop = cron.Name + "-quay"
 	cronJobName = cron.Name + "-cronjob"
 }
 
@@ -298,5 +355,6 @@ func (r *CronReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&webappcronv1.Cron{}).
 		Owns(&batchv1.CronJob{}).
 		Owns(&apiv1.ConfigMap{}).
+		Owns(&apiv1.Secret{}).
 		Complete(r)
 }

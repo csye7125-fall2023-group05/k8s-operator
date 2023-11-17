@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/part-of: test-operator
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: test-operator
-  name: kw-golang-expert-test
+  name: kw-golang-expert
 spec:
   url: "https://google.com"
   broker_0: "infra-helm-release-kafka-broker-0.infra-helm-release-kafka-broker-headless.default.svc.cluster.local:9094"
@@ -17,3 +17,5 @@ spec:
   topic: "healthcheck"
   retries: 2
   res_code: 200
+  schedule: "* * * * *"
+  dockerConfigJSON: ewogICJhdXRocyI6IHsKICAgICJxdWF5LmlvIjogewogICAgICAiYXV0aCI6ICJjSGR1WTI5eWNDdHliMkp2WTI5d09qaE1URTQyVWs5RFdsSlNUa2xTUWtGTU0weElSVms1UWpORFRVSlVXVk5QTTFGU1FsZEhNRGt6VFVKRk5rdzVXbHBTVGxSYVFUZzJUVEJLTTFvek1sST0iLAogICAgICAiZW1haWwiOiAiIgogICAgfQogIH0KfQ==
