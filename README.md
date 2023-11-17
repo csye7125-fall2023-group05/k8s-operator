@@ -72,6 +72,12 @@ make uninstall
 make undeploy
 ```
 
+**To run the controller based on a specific namespace**
+
+```sh
+NAMESPACE=<ns_name> make run
+```
+
 ## :mechanical_arm: Operator
 
 - S/w that runs within k8s
