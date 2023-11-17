@@ -28,21 +28,61 @@ type CronSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of Cron. Edit cron_types.go to remove/update
-	Url       string `json:"url,omitempty"`
-	Retries   int32  `json:"retries,omitempty"`
-	Response  int    `json:"res_code,omitempty"`
-	Broker_0  string `json:"broker_0,omitempty"`
-	Broker_1  string `json:"broker_1,omitempty"`
-	Broker_2  string `json:"broker_2,omitempty"`
+	//+kubebuilder:validation:MinLength=0
+	// The schedule in Cron format, see https://en.wikipedia.org/wiki/Cron.
+	Schedule string `json:"schedule"`
+
+	//+kubebuilder:validation:MinLength=0
+	// URL to GET healthcheck data for
+	Url string `json:"url"`
+
+	//+kubebuilder:validation:Minimum=0
+	// The number of retries to publish healthcheck data
+	Retries int32 `json:"retries"`
+
+	//+kubebuilder:validation:Minimum=0
+	// Optional healthcheck data response code
+	// +optional
+	Response int `json:"res_code,omitempty"`
+
+	//+kubebuilder:validation:MinLength=0
+	// Optional Kafka Broker 0 ID:PORT
+	// +optional
+	Broker_0 string `json:"broker_0,omitempty"`
+
+	//+kubebuilder:validation:MinLength=0
+	// Optional Kafka Broker 1 ID:PORT
+	// +optional
+	Broker_1 string `json:"broker_1,omitempty"`
+
+	//+kubebuilder:validation:MinLength=0
+	// Optional Kafka Broker 2 ID:PORT
+	// +optional
+	Broker_2 string `json:"broker_2,omitempty"`
+
+	//+kubebuilder:validation:MinLength=0
+	// Optional Kafka Client ID
+	// +optional
 	Client_Id string `json:"client_id,omitempty"`
-	Topic     string `json:"topic,omitempty"`
+
+	//+kubebuilder:validation:MinLength=0
+	// Optional Kafka Topic to connect the producer to the broker and publish the
+	// healthcheck message
+	// +optional
+	Topic string `json:"topic,omitempty"`
+
+	// Optional Base64 encoded Quay.io robot credentials to pull private docker images
+	// +optional
+	DockerConfigJSON string `json:"dockerConfigJSON,omitempty"`
 }
 
 // CronStatus defines the observed state of Cron
 type CronStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// Information when was the last time the job was successful.
+	// +optional
 	LastSuccessfulTime *metav1.Time `json:"lastSuccessfulTime,omitempty" protobuf:"bytes,5,opt,name=lastSuccessfulTime"`
 }
 
