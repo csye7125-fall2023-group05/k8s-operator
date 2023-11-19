@@ -50,6 +50,12 @@ type CronReconciler struct {
 //+kubebuilder:rbac:groups=webappcron.csye7125-fall2023-group05.cloud,resources=crons,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=webappcron.csye7125-fall2023-group05.cloud,resources=crons/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=webappcron.csye7125-fall2023-group05.cloud,resources=crons/finalizers,verbs=update
+//+kubebuilder:rbac:groups="batch",resources=cronjobs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="batch",resources=cronjobs/status,verbs=get
+//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=configmaps/status,verbs=get
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=secrets/status,verbs=get
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
