@@ -33,12 +33,50 @@ type CronSpec struct {
 	Schedule string `json:"schedule"`
 
 	//+kubebuilder:validation:MinLength=0
+	// The name of the application to monitor for healthcheck
+	// +optional
+	Name string `json:"name,omitempty"`
+
+	//+kubebuilder:validation:MinLength=0
 	// URL to GET healthcheck data for
 	Url string `json:"url"`
 
-	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:default:=true
+	// Is the service paused?
+	// +optional
+	Is_Paused *bool `json:"is_paused,omitempty"`
+
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:validation:Maximum=5
+	//+kubebuilder:default:=5
 	// The number of retries to publish healthcheck data
 	Retries int32 `json:"retries"`
+
+	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:validation:Maximum=100
+	//+kubebuilder:default:=100
+	// Uptime SLA
+	// +optional
+	Uptime_SLA int32 `json:"uptime_sla,omitempty"`
+
+	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:validation:Maximum=100
+	//+kubebuilder:default:=100
+	// Response Time SLA
+	// +optional
+	Response_Time_SLA int32 `json:"response_time_sla,omitempty"`
+
+	//+kubebuilder:default:=true
+	// Use SSL
+	// +optional
+	Use_SSL *bool `json:"use_ssl,omitempty"`
+
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:validation:Maximum=86400
+	//+kubebuilder:default:=86400
+	// Check interval in seconds
+	// +optional
+	Check_Interval_In_Seconds int32 `json:"check_interval_in_seconds,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
 	// Optional healthcheck data response code
@@ -74,6 +112,14 @@ type CronSpec struct {
 	// Optional Base64 encoded Quay.io robot credentials to pull private docker images
 	// +optional
 	DockerConfigJSON string `json:"dockerConfigJSON,omitempty"`
+
+	//+kubebuilder:default:=0
+	// The successful jobs history limit
+	SuccessfulJobsHistoryLimit int32 `json:"success_limit,omitempty"`
+
+	//+kubebuilder:default:=0
+	// The failed jobs history limit
+	FailedJobsHistoryLimit int32 `json:"failure_limit,omitempty"`
 }
 
 // CronStatus defines the observed state of Cron

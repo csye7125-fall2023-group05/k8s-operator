@@ -78,7 +78,7 @@ func (r *CronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	cfgMap := r.defineConfigMap(&cron)
 
 	if err := r.Get(ctx, types.NamespacedName{Name: configMapName, Namespace: cron.Namespace}, cfgMap); err != nil {
-		log.Error(err, "Unable to fetch ConfigMap for CronJob")
+		log.Info("ConfigMap not created for CronJob")
 
 		log.V(1).Info("Creating ConfigMap")
 		cfgMap_error := r.Create(ctx, cfgMap)
@@ -93,7 +93,7 @@ func (r *CronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	// CREATE: ImagePullSecrets
 	scrt := r.defineQuaySecret(&cron)
 	if err := r.Get(ctx, types.NamespacedName{Name: robocop, Namespace: cron.Namespace}, scrt); err != nil {
-		log.Error(err, "Unable to fetch Secret for CronJob")
+		log.Info("Secret not for CronJob")
 
 		log.V(1).Info("Creating Secret")
 		scrt_error := r.Create(ctx, scrt)
@@ -128,17 +128,109 @@ func (r *CronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	}
 
 	// UPDATE: Reconcile cfgMap
+	if fmt.Sprint(cron.Spec.Schedule) != cfgMap.Data["SCHEDULE"] {
+		log.V(1).Info("Updating Schedule")
+		cfgMap.Data["SCHEDULE"] = fmt.Sprint(cron.Spec.Schedule)
+		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
+		return ctrl.Result{}, err
+	}
+
+	if cron.Spec.Name != cfgMap.Data["NAME"] {
+		log.V(1).Info("Updating Name")
+		cfgMap.Data["NAME"] = fmt.Sprint(cron.Spec.Name)
+		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
+		return ctrl.Result{}, err
+	}
+
 	if fmt.Sprint(cron.Spec.Retries) != cfgMap.Data["RETRIES"] {
 		log.V(1).Info("Updating Retries")
 		cfgMap.Data["RETRIES"] = fmt.Sprint(cron.Spec.Retries)
-		_, err := r.UpdateCfgMap(ctx, cfgMap, req)
+		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
 		return ctrl.Result{}, err
 	}
 
 	if fmt.Sprint(cron.Spec.Url) != cfgMap.Data["URL"] {
 		log.V(1).Info("Updating Url")
 		cfgMap.Data["URL"] = fmt.Sprint(cron.Spec.Url)
-		_, err := r.UpdateCfgMap(ctx, cfgMap, req)
+		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
+		return ctrl.Result{}, err
+	}
+
+	if fmt.Sprint(cron.Spec.Uptime_SLA) != cfgMap.Data["UPTIME_SLA"] {
+		log.V(1).Info("Updating Uptime SLA")
+		cfgMap.Data["UPTIME_SLA"] = fmt.Sprint(cron.Spec.Uptime_SLA)
+		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
+		return ctrl.Result{}, err
+	}
+
+	if fmt.Sprint(cron.Spec.Response_Time_SLA) != cfgMap.Data["RESPONSE_TIME_SLA"] {
+		log.V(1).Info("Updating Response Time SLA")
+		cfgMap.Data["RESPONSE_TIME_SLA"] = fmt.Sprint(cron.Spec.Response_Time_SLA)
+		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
+		return ctrl.Result{}, err
+	}
+
+	if fmt.Sprint(cron.Spec.Check_Interval_In_Seconds) != cfgMap.Data["CHECK_INTERVAL_IN_SECONDS"] {
+		log.V(1).Info("Updating Check Interval In Seconds")
+		cfgMap.Data["CHECK_INTERVAL_IN_SECONDS"] = fmt.Sprint(cron.Spec.Check_Interval_In_Seconds)
+		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
+		return ctrl.Result{}, err
+	}
+
+	if fmt.Sprint(cron.Spec.Broker_0) != cfgMap.Data["BROKER_0"] {
+		log.V(1).Info("Updating Broker_0")
+		cfgMap.Data["BROKER_0"] = fmt.Sprint(cron.Spec.Broker_0)
+		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
+		return ctrl.Result{}, err
+	}
+
+	if fmt.Sprint(cron.Spec.Broker_1) != cfgMap.Data["BROKER_1"] {
+		log.V(1).Info("Updating Broker_1")
+		cfgMap.Data["BROKER_1"] = fmt.Sprint(cron.Spec.Broker_1)
+		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
+		return ctrl.Result{}, err
+	}
+
+	if fmt.Sprint(cron.Spec.Broker_2) != cfgMap.Data["BROKER_2"] {
+		log.V(1).Info("Updating Broker_2")
+		cfgMap.Data["BROKER_2"] = fmt.Sprint(cron.Spec.Broker_2)
+		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
+		return ctrl.Result{}, err
+	}
+
+	if fmt.Sprint(cron.Spec.Client_Id) != cfgMap.Data["CLIENT_ID"] {
+		log.V(1).Info("Updating Client ID")
+		cfgMap.Data["CLIENT_ID"] = fmt.Sprint(cron.Spec.Client_Id)
+		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
+		return ctrl.Result{}, err
+	}
+
+	if fmt.Sprint(cron.Spec.Topic) != cfgMap.Data["TOPIC"] {
+		log.V(1).Info("Updating Topic")
+		cfgMap.Data["TOPIC"] = fmt.Sprint(cron.Spec.Topic)
+		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
+		return ctrl.Result{}, err
+	}
+
+	// TODO: update secret data if changed
+	// if fmt.Sprint(cron.Spec.DockerConfigJSON) != string(scrt.Data["DOCKERCONFIGJSON"]) {
+	// 	log.V(1).Info("Updating DockerConfigJSON")
+	// 	scrt.Data["DOCKERCONFIGJSON"] = cron.Spec.DockerConfigJSON
+	// 	_, err := r.UpdateSecret(ctx, scrt, &cron, req)
+	// 	return ctrl.Result{}, err
+	// }
+
+	if fmt.Sprint(cron.Spec.FailedJobsHistoryLimit) != cfgMap.Data["FAILED_JOBS_HISTORY_LIMIT"] {
+		log.V(1).Info("Updating FailedJobsHistoryLimit")
+		cfgMap.Data["FAILED_JOBS_HISTORY_LIMIT"] = fmt.Sprint(cron.Spec.FailedJobsHistoryLimit)
+		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
+		return ctrl.Result{}, err
+	}
+
+	if fmt.Sprint(cron.Spec.SuccessfulJobsHistoryLimit) != cfgMap.Data["SUCCESSFUL_JOBS_HISTORY_LIMIT"] {
+		log.V(1).Info("Updating SuccessfulJobsHistoryLimit")
+		cfgMap.Data["SUCCESSFUL_JOBS_HISTORY_LIMIT"] = fmt.Sprint(cron.Spec.SuccessfulJobsHistoryLimit)
+		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
 		return ctrl.Result{}, err
 	}
 
@@ -190,15 +282,24 @@ func (r *CronReconciler) defineConfigMap(cron *webappcronv1.Cron) *apiv1.ConfigM
 			Name:      configMapName,
 			Namespace: cron.Namespace,
 		},
-		// TODO: add more config data values as per API spec
 		Data: map[string]string{
-			"RETRIES":   fmt.Sprint(cron.Spec.Retries),
-			"URL":       cron.Spec.Url,
-			"BROKER_0":  cron.Spec.Broker_0,
-			"BROKER_1":  cron.Spec.Broker_1,
-			"BROKER_2":  cron.Spec.Broker_2,
-			"CLIENT_ID": cron.Spec.Client_Id,
-			"TOPIC":     cron.Spec.Topic,
+			"SCHEDULE": cron.Spec.Schedule,
+			"NAME":     cron.Spec.Name,
+			"URL":      cron.Spec.Url,
+			// "IS_PAUSED": cron.Spec.Is_Paused,
+			"RETRIES":           fmt.Sprint(cron.Spec.Retries),
+			"UPTIME_SLA":        fmt.Sprint(cron.Spec.Uptime_SLA),
+			"RESPONSE_TIME_SLA": fmt.Sprint(cron.Spec.Response_Time_SLA),
+			// "USE_SSL": cron.Spec.Use_SSL,
+			"RES_CODE":                      fmt.Sprint(cron.Spec.Response),
+			"CHECK_INTERVAL_IN_SECONDS":     fmt.Sprint(cron.Spec.Check_Interval_In_Seconds),
+			"BROKER_0":                      cron.Spec.Broker_0,
+			"BROKER_1":                      cron.Spec.Broker_1,
+			"BROKER_2":                      cron.Spec.Broker_2,
+			"CLIENT_ID":                     cron.Spec.Client_Id,
+			"TOPIC":                         cron.Spec.Topic,
+			"FAILED_JOBS_HISTORY_LIMIT":     fmt.Sprint(cron.Spec.FailedJobsHistoryLimit),
+			"SUCCESSFUL_JOBS_HISTORY_LIMIT": fmt.Sprint(cron.Spec.SuccessfulJobsHistoryLimit),
 		},
 	}
 
@@ -219,7 +320,6 @@ func (r *CronReconciler) defineQuaySecret(cron *webappcronv1.Cron) *apiv1.Secret
 			Namespace: cron.Namespace,
 		},
 		Type: apiv1.SecretTypeDockerConfigJson,
-		// TODO: add secret data
 		StringData: map[string]string{
 			".dockerconfigjson": string(decodedValue),
 		},
@@ -238,8 +338,10 @@ func (r *CronReconciler) defineCronJob(cron *webappcronv1.Cron) *batchv1.CronJob
 			Namespace: cron.Namespace,
 		},
 		Spec: batchv1.CronJobSpec{
-			ConcurrencyPolicy: batchv1.ForbidConcurrent,
-			Schedule:          cron.Spec.Schedule,
+			ConcurrencyPolicy:          batchv1.ForbidConcurrent,
+			Schedule:                   cron.Spec.Schedule,
+			SuccessfulJobsHistoryLimit: &cron.Spec.SuccessfulJobsHistoryLimit,
+			FailedJobsHistoryLimit:     &cron.Spec.FailedJobsHistoryLimit,
 			JobTemplate: batchv1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					BackoffLimit: &cron.Spec.Retries,
@@ -329,16 +431,27 @@ func (r *CronReconciler) deleteExternalResources(cron *webappcronv1.Cron, job *b
 }
 
 // Update function for configMap updates
-func (r *CronReconciler) UpdateCfgMap(ctx context.Context, cfgMap *apiv1.ConfigMap, req ctrl.Request) (ctrl.Result, error) {
-	// TODO: Modular Update function for ConfigMap update reconciliation logic
+func (r *CronReconciler) UpdateCfgMap(ctx context.Context, cfgMap *apiv1.ConfigMap, cron *webappcronv1.Cron, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	err := r.Update(ctx, cfgMap)
 	if err != nil {
-		log.Error(err, "Could not update the CronJob resource")
+		log.Error(err, "Could not update the CronJob ConfigMap resource")
 		return ctrl.Result{}, err
 	}
-	log.V(1).Info("CronJob updated successfully!")
+	log.V(1).Info("CronJob ConfigMap updated successfully!")
 	return ctrl.Result{}, nil
+}
+
+// TODO: Update function for secret updates
+func (r *CronReconciler) UpdateSecret(ctx context.Context, scrt *apiv1.Secret, cron *webappcronv1.Cron, req ctrl.Request) (ctrl.Request, error) {
+	log := log.FromContext(ctx)
+	err := r.Update(ctx, scrt)
+	if err != nil {
+		log.Error(err, "Could not update the CronJon Secret resource")
+		return ctrl.Request{}, err
+	}
+	log.V(1).Info("CronJob Secret updated successfully!")
+	return ctrl.Request{}, nil
 }
 
 // Define the global variables for ConfigMap, Secret & CronJob

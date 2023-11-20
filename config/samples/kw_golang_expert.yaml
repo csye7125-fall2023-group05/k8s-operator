@@ -9,13 +9,21 @@ metadata:
     app.kubernetes.io/created-by: test-operator
   name: kw-golang-expert
 spec:
+  schedule: "* * * * *"
+  name: "google"
   url: "https://google.com"
-  broker_0: "infra-helm-release-kafka-broker-0.infra-helm-release-kafka-broker-headless.default.svc.cluster.local:9094"
-  broker_1: "infra-helm-release-kafka-broker-1.infra-helm-release-kafka-broker-headless.default.svc.cluster.local:9094"
-  broker_2: "infra-helm-release-kafka-broker-2.infra-helm-release-kafka-broker-headless.default.svc.cluster.local:9094"
+  # is_paused: true
+  retries: 5
+  uptime_sla: 100
+  response_time_sla: 100
+  # use_ssl: true
+  res_code: 0
+  check_interval_in_seconds: 86400
+  broker_0: "infra-helm-release-kafka-broker-0.infra-helm-release-kafka-broker-headless.deps.svc.cluster.local:9094"
+  broker_1: "infra-helm-release-kafka-broker-1.infra-helm-release-kafka-broker-headless.deps.svc.cluster.local:9094"
+  broker_2: "infra-helm-release-kafka-broker-2.infra-helm-release-kafka-broker-headless.deps.svc.cluster.local:9094"
   client_id: "webapp"
   topic: "healthcheck"
-  retries: 2
-  res_code: 200
-  schedule: "* * * * *"
-  dockerConfigJSON: "TODO:quay.io-robocop-secret"
+  failure_limit: 0
+  success_limit: 0
+  dockerConfigJSON: b2theS1tci1oYWNrZXItY2FsbS1kb3duCg==
