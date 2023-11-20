@@ -68,13 +68,22 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	// Get the namespace via environment variable
-	namespace := os.Getenv("K8S_NAMESPACE")
+	// namespace := os.Getenv("K8S_NAMESPACE")
+	namespaces := []string{
+		"webapp",
+	} // List of Namespaces
+	defaultNamespaces := make(map[string]cache.Config)
+
+	for _, ns := range namespaces {
+		defaultNamespaces[ns] = cache.Config{}
+	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Cache: cache.Options{
-			DefaultNamespaces: map[string]cache.Config{
-				namespace: {},
-			},
+			DefaultNamespaces: defaultNamespaces,
+			// DefaultNamespaces: map[string]cache.Config{
+			// 	namespace: {},
+			// },
 		},
 		Scheme:                 scheme,
 		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
