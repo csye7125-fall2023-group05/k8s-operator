@@ -67,8 +67,8 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	//getting the ns
-	namespace := os.Getenv("NAMESPACE")
+	// Get the namespace via environment variable
+	namespace := os.Getenv("K8S_NAMESPACE")
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Cache: cache.Options{

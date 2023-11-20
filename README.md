@@ -5,7 +5,9 @@ Basically, Reconcile the `current` state to the `desired` state
 
 ## Description
 
-// TODO(user): An in-depth paragraph about your project and overview of use
+This is a custom kubernetes operator which creates a Cron Custom Resource Definition, based on which the controller watches for a Custom Resource and applies the reconciliation logic using the `Reconciler` in the operator controller.
+
+The controller only creates, watches and deletes the `Cron` resource, and updates the `ConfigMap` and `Secret` resources.
 
 ## Getting Started
 

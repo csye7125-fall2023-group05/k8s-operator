@@ -46,6 +46,13 @@ spec:
                 description: Optional Kafka Broker 2 ID:PORT
                 minLength: 0
                 type: string
+              check_interval_in_seconds:
+                default: 86400
+                description: Check interval in seconds
+                format: int32
+                maximum: 86400
+                minimum: 1
+                type: integer
               client_id:
                 description: Optional Kafka Client ID
                 minLength: 0
@@ -54,28 +61,66 @@ spec:
                 description: Optional Base64 encoded Quay.io robot credentials to
                   pull private docker images
                 type: string
+              failure_limit:
+                default: 0
+                description: The failed jobs history limit
+                format: int32
+                type: integer
+              is_paused:
+                default: true
+                description: Is the service paused?
+                type: boolean
+              name:
+                description: The name of the application to monitor for healthcheck
+                minLength: 0
+                type: string
               res_code:
                 description: Optional healthcheck data response code
                 minimum: 0
                 type: integer
+              response_time_sla:
+                default: 100
+                description: Response Time SLA
+                format: int32
+                maximum: 100
+                minimum: 0
+                type: integer
               retries:
+                default: 5
                 description: The number of retries to publish healthcheck data
                 format: int32
-                minimum: 0
+                maximum: 5
+                minimum: 1
                 type: integer
               schedule:
                 description: The schedule in Cron format, see https://en.wikipedia.org/wiki/Cron.
                 minLength: 0
                 type: string
+              success_limit:
+                default: 0
+                description: The successful jobs history limit
+                format: int32
+                type: integer
               topic:
                 description: Optional Kafka Topic to connect the producer to the broker
                   and publish the healthcheck message
                 minLength: 0
                 type: string
+              uptime_sla:
+                default: 100
+                description: Uptime SLA
+                format: int32
+                maximum: 100
+                minimum: 0
+                type: integer
               url:
                 description: URL to GET healthcheck data for
                 minLength: 0
                 type: string
+              use_ssl:
+                default: true
+                description: Use SSL
+                type: boolean
             required:
             - retries
             - schedule
