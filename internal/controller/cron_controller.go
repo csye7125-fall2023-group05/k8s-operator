@@ -78,7 +78,7 @@ func (r *CronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	cfgMap := r.defineConfigMap(&cron)
 
 	if err := r.Get(ctx, types.NamespacedName{Name: configMapName, Namespace: cron.Namespace}, cfgMap); err != nil {
-		log.Info("ConfigMap not created for CronJob")
+		log.Error(err, "ConfigMap not created for CronJob")
 
 		log.V(1).Info("Creating ConfigMap")
 		cfgMap_error := r.Create(ctx, cfgMap)
@@ -93,7 +93,7 @@ func (r *CronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	// CREATE: ImagePullSecrets
 	scrt := r.defineQuaySecret(&cron)
 	if err := r.Get(ctx, types.NamespacedName{Name: robocop, Namespace: cron.Namespace}, scrt); err != nil {
-		log.Info("Secret not for CronJob")
+		log.Error(err, "Secret not created for CronJob")
 
 		log.V(1).Info("Creating Secret")
 		scrt_error := r.Create(ctx, scrt)

@@ -71,7 +71,7 @@ func main() {
 	// namespace := os.Getenv("K8S_NAMESPACE")
 	namespaces := []string{
 		"webapp",
-	} // List of Namespaces
+	}
 	defaultNamespaces := make(map[string]cache.Config)
 
 	for _, ns := range namespaces {
