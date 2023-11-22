@@ -149,30 +149,23 @@ func (r *CronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 
+	if fmt.Sprint(cron.Spec.Response) != cfgMap.Data["RESPONSE"] {
+		log.V(1).Info("Updating Response")
+		cfgMap.Data["RESPONSE"] = fmt.Sprint(cron.Spec.Response)
+		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
+		return ctrl.Result{}, err
+	}
+
+	if fmt.Sprint(cron.Spec.HTTP_Check_Id) != cfgMap.Data["HTTP_CHECK_ID"] {
+		log.V(1).Info("Updating HTTP_Check_Id")
+		cfgMap.Data["HTTP_CHECK_ID"] = fmt.Sprint(cron.Spec.HTTP_Check_Id)
+		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
+		return ctrl.Result{}, err
+	}
+
 	if fmt.Sprint(cron.Spec.Url) != cfgMap.Data["URL"] {
 		log.V(1).Info("Updating Url")
 		cfgMap.Data["URL"] = fmt.Sprint(cron.Spec.Url)
-		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
-		return ctrl.Result{}, err
-	}
-
-	if fmt.Sprint(cron.Spec.Uptime_SLA) != cfgMap.Data["UPTIME_SLA"] {
-		log.V(1).Info("Updating Uptime SLA")
-		cfgMap.Data["UPTIME_SLA"] = fmt.Sprint(cron.Spec.Uptime_SLA)
-		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
-		return ctrl.Result{}, err
-	}
-
-	if fmt.Sprint(cron.Spec.Response_Time_SLA) != cfgMap.Data["RESPONSE_TIME_SLA"] {
-		log.V(1).Info("Updating Response Time SLA")
-		cfgMap.Data["RESPONSE_TIME_SLA"] = fmt.Sprint(cron.Spec.Response_Time_SLA)
-		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
-		return ctrl.Result{}, err
-	}
-
-	if fmt.Sprint(cron.Spec.Check_Interval_In_Seconds) != cfgMap.Data["CHECK_INTERVAL_IN_SECONDS"] {
-		log.V(1).Info("Updating Check Interval In Seconds")
-		cfgMap.Data["CHECK_INTERVAL_IN_SECONDS"] = fmt.Sprint(cron.Spec.Check_Interval_In_Seconds)
 		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
 		return ctrl.Result{}, err
 	}
@@ -283,16 +276,11 @@ func (r *CronReconciler) defineConfigMap(cron *webappcronv1.Cron) *apiv1.ConfigM
 			Namespace: cron.Namespace,
 		},
 		Data: map[string]string{
-			"SCHEDULE": cron.Spec.Schedule,
-			"NAME":     cron.Spec.Name,
-			"URL":      cron.Spec.Url,
-			// "IS_PAUSED": cron.Spec.Is_Paused,
-			"RETRIES":           fmt.Sprint(cron.Spec.Retries),
-			"UPTIME_SLA":        fmt.Sprint(cron.Spec.Uptime_SLA),
-			"RESPONSE_TIME_SLA": fmt.Sprint(cron.Spec.Response_Time_SLA),
-			// "USE_SSL": cron.Spec.Use_SSL,
+			"SCHEDULE":                      cron.Spec.Schedule,
+			"NAME":                          cron.Spec.Name,
+			"URL":                           cron.Spec.Url,
+			"RETRIES":                       fmt.Sprint(cron.Spec.Retries),
 			"RES_CODE":                      fmt.Sprint(cron.Spec.Response),
-			"CHECK_INTERVAL_IN_SECONDS":     fmt.Sprint(cron.Spec.Check_Interval_In_Seconds),
 			"BROKER_0":                      cron.Spec.Broker_0,
 			"BROKER_1":                      cron.Spec.Broker_1,
 			"BROKER_2":                      cron.Spec.Broker_2,
