@@ -12,13 +12,9 @@ spec:
   schedule: "* * * * *"
   name: "google"
   url: "https://google.com"
-  # is_paused: true
   retries: 5
-  uptime_sla: 100
-  response_time_sla: 100
-  # use_ssl: true
-  res_code: 0
-  check_interval_in_seconds: 86400
+  res_code: 200
+  http_check_id: "aa9f3201-9b51-41fe-93ab-a22f3deb75e4"
   broker_0: "infra-helm-release-kafka-broker-0.infra-helm-release-kafka-broker-headless.deps.svc.cluster.local:9094"
   broker_1: "infra-helm-release-kafka-broker-1.infra-helm-release-kafka-broker-headless.deps.svc.cluster.local:9094"
   broker_2: "infra-helm-release-kafka-broker-2.infra-helm-release-kafka-broker-headless.deps.svc.cluster.local:9094"

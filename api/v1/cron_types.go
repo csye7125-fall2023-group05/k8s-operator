@@ -41,11 +41,6 @@ type CronSpec struct {
 	// URL to GET healthcheck data for
 	Url string `json:"url"`
 
-	//+kubebuilder:default:=true
-	// Is the service paused?
-	// +optional
-	Is_Paused *bool `json:"is_paused,omitempty"`
-
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=5
 	//+kubebuilder:default:=5
@@ -53,35 +48,13 @@ type CronSpec struct {
 	Retries int32 `json:"retries"`
 
 	//+kubebuilder:validation:Minimum=0
-	//+kubebuilder:validation:Maximum=100
-	//+kubebuilder:default:=100
-	// Uptime SLA
-	// +optional
-	Uptime_SLA int32 `json:"uptime_sla,omitempty"`
-
-	//+kubebuilder:validation:Minimum=0
-	//+kubebuilder:validation:Maximum=100
-	//+kubebuilder:default:=100
-	// Response Time SLA
-	// +optional
-	Response_Time_SLA int32 `json:"response_time_sla,omitempty"`
-
-	//+kubebuilder:default:=true
-	// Use SSL
-	// +optional
-	Use_SSL *bool `json:"use_ssl,omitempty"`
-
-	//+kubebuilder:validation:Minimum=1
-	//+kubebuilder:validation:Maximum=86400
-	//+kubebuilder:default:=86400
-	// Check interval in seconds
-	// +optional
-	Check_Interval_In_Seconds int32 `json:"check_interval_in_seconds,omitempty"`
-
-	//+kubebuilder:validation:Minimum=0
 	// Optional healthcheck data response code
 	// +optional
 	Response int `json:"res_code,omitempty"`
+
+	//+kubebuilder:validation:MinLength=0
+	// The UUID of the message consumed from the producer
+	HTTP_Check_Id string `json:"http_check_id"`
 
 	//+kubebuilder:validation:MinLength=0
 	// Optional Kafka Broker 0 ID:PORT
