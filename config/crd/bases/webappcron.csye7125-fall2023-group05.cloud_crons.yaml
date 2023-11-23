@@ -59,6 +59,10 @@ spec:
                 description: The failed jobs history limit
                 format: int32
                 type: integer
+              http_check_id:
+                description: The UUID of the message consumed from the producer
+                minLength: 0
+                type: string
               name:
                 description: The name of the application to monitor for healthcheck
                 minLength: 0
@@ -93,6 +97,7 @@ spec:
                 minLength: 0
                 type: string
             required:
+            - http_check_id
             - retries
             - schedule
             - url

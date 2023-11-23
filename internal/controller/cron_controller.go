@@ -156,13 +156,6 @@ func (r *CronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 
-	if fmt.Sprint(cron.Spec.HTTP_Check_Id) != cfgMap.Data["HTTP_CHECK_ID"] {
-		log.V(1).Info("Updating HTTP_Check_Id")
-		cfgMap.Data["HTTP_CHECK_ID"] = fmt.Sprint(cron.Spec.HTTP_Check_Id)
-		_, err := r.UpdateCfgMap(ctx, cfgMap, &cron, req)
-		return ctrl.Result{}, err
-	}
-
 	if fmt.Sprint(cron.Spec.Url) != cfgMap.Data["URL"] {
 		log.V(1).Info("Updating Url")
 		cfgMap.Data["URL"] = fmt.Sprint(cron.Spec.Url)
@@ -281,6 +274,7 @@ func (r *CronReconciler) defineConfigMap(cron *webappcronv1.Cron) *apiv1.ConfigM
 			"URL":                           cron.Spec.Url,
 			"RETRIES":                       fmt.Sprint(cron.Spec.Retries),
 			"RES_CODE":                      fmt.Sprint(cron.Spec.Response),
+			"HTTP_CHECK_ID":                 fmt.Sprint(cron.Spec.HTTP_Check_Id),
 			"BROKER_0":                      cron.Spec.Broker_0,
 			"BROKER_1":                      cron.Spec.Broker_1,
 			"BROKER_2":                      cron.Spec.Broker_2,
