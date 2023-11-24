@@ -102,7 +102,12 @@ type CronStatus struct {
 
 	// Information when was the last time the job was successful.
 	// +optional
-	LastSuccessfulTime *metav1.Time `json:"lastSuccessfulTime,omitempty" protobuf:"bytes,5,opt,name=lastSuccessfulTime"`
+	LastScheduleTime *metav1.Time `json:"lastScheduleTime,omitempty"`
+
+	//+kubebuilder:default=false
+	// Status of the CronJob
+	// +optional
+	Active bool `json:"active,omitempty"`
 }
 
 //+kubebuilder:object:root=true

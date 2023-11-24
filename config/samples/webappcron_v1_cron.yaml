@@ -4,9 +4,9 @@ metadata:
   labels:
     app.kubernetes.io/name: cron
     app.kubernetes.io/instance: cron-sample
-    app.kubernetes.io/part-of: test-operator
+    app.kubernetes.io/part-of: k8s-operator
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: test-operator
+    app.kubernetes.io/created-by: k8s-operator
   name: cron-sample
 spec:
   url: "www.google.com"

@@ -6,22 +6,22 @@ metadata:
     app.kubernetes.io/name: clusterrole
     app.kubernetes.io/instance: cron-viewer-role
     app.kubernetes.io/component: rbac
-    app.kubernetes.io/created-by: test-operator
-    app.kubernetes.io/part-of: test-operator
+    app.kubernetes.io/created-by: k8s-operator
+    app.kubernetes.io/part-of: k8s-operator
     app.kubernetes.io/managed-by: kustomize
   name: cron-viewer-role
 rules:
-- apiGroups:
-  - webappcron.csye7125-fall2023-group05.cloud
-  resources:
-  - crons
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - webappcron.csye7125-fall2023-group05.cloud
-  resources:
-  - crons/status
-  verbs:
-  - get
+  - apiGroups:
+      - webappcron.csye7125-fall2023-group05.cloud
+    resources:
+      - crons
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - webappcron.csye7125-fall2023-group05.cloud
+    resources:
+      - crons/status
+    verbs:
+      - get

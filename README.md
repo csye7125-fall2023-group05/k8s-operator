@@ -23,7 +23,7 @@ The controller only creates, watches and deletes the `Cron` resource, and update
 **Build and push your image to the location specified by `IMG`:**
 
 ```sh
-make docker-build docker-push IMG=<some-registry>/test-operator:tag
+make docker-build docker-push IMG=<some-registry>/k8s-operator:tag
 ```
 
 > **NOTE:** This image ought to be published in the personal registry you specified.
@@ -39,7 +39,7 @@ make install
 **Deploy the Manager to the cluster with the image specified by `IMG`:**
 
 ```sh
-make deploy IMG=<some-registry>/test-operator:tag
+make deploy IMG=<some-registry>/k8s-operator:tag
 ```
 
 > **NOTE**: If you encounter RBAC errors, you may need to grant yourself cluster-admin
