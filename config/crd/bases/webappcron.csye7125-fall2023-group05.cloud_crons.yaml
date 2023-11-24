@@ -105,7 +105,11 @@ spec:
           status:
             description: CronStatus defines the observed state of Cron
             properties:
-              lastSuccessfulTime:
+              active:
+                default: false
+                description: Status of the CronJob
+                type: boolean
+              lastScheduleTime:
                 description: Information when was the last time the job was successful.
                 format: date-time
                 type: string
