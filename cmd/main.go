@@ -68,9 +68,9 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	// Get the namespace via environment variable
-	// namespace := os.Getenv("K8S_NAMESPACE")
+	//namespace := os.Getenv("NAMESPACE")
 	namespaces := []string{
-		"webapp",
+		os.Getenv("NAMESPACE"),
 	}
 	defaultNamespaces := make(map[string]cache.Config)
 

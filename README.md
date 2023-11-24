@@ -23,7 +23,8 @@ The controller only creates, watches and deletes the `Cron` resource, and update
 **Build and push your image to the location specified by `IMG`:**
 
 ```sh
-make docker-build docker-push IMG=<some-registry>/k8s-operator:tag
+# If NS is not specified, operator will watch the default namespace
+make docker-build docker-push IMG=<some-registry>/k8s-operator:tag NS=<your-namespace>
 ```
 
 > **NOTE:** This image ought to be published in the personal registry you specified.
