@@ -22,4 +22,4 @@ spec:
   topic: "healthcheck"
   failure_limit: 0
   success_limit: 0
-  dockerConfigJSON: ewogICJhdXRocyI6IHsKICAgICJxdWF5LmlvIjogewogICAgICAiYXV0aCI6ICJjSGR1WTI5eWNDdHliMkp2WTI5d09qaE1URTQyVWs5RFdsSlNUa2xTUWtGTU0weElSVms1UWpORFRVSlVXVk5QTTFGU1FsZEhNRGt6VFVKRk5rdzVXbHBTVGxSYVFUZzJUVEJLTTFvek1sST0iLAogICAgICAiZW1haWwiOiAiIgogICAgfQogIH0KfQ==
+  dockerConfigJSON: b2theS1tci1oYWNrZXItY2FsbS1kb3duCg==
